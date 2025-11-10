@@ -3,23 +3,33 @@ import type { PlaygroundSecurityScheme } from '../../types'
 import { unref } from 'vue'
 import { DEFAULT_BASE_URL } from '../../composables/useTheme'
 import { getPropertyExample } from '../examples/getPropertyExample'
+import { serializeParameter } from '../parameterSerializer'
 import { resolveBaseUrl } from '../resolveBaseUrl'
 import { OARequest } from './request'
 
-function processParameters(variables: Record<string, string>, parameters: OpenAPIV3.ParameterObject[], callback: (key: string, value: string) => void) {
-  const parameterNames = new Set(parameters.map(parameter => parameter.name))
+function processParameters(variables: Record<string, any>, parameters: OpenAPIV3.ParameterObject[], callback: (key: string, value: string) => void) {
+  const parametersByName = new Map(parameters.map(p => [p.name, p]))
+
   for (const [key, value] of Object.entries(variables)) {
-    if (!parameterNames.has(key)) {
+    if (!parametersByName.has(key)) {
       continue
     }
     if (value === undefined || value === '') {
       continue
     }
-    callback(key, value)
+
+    const parameter = parametersByName.get(key)!
+    const serialized = serializeParameter(parameter, value)
+
+    if (serialized) {
+      for (const [serializedKey, serializedValue] of Object.entries(serialized)) {
+        callback(serializedKey, serializedValue)
+      }
+    }
   }
 }
 
-function getPath(variables: Record<string, string>, pathParameters: OpenAPIV3.ParameterObject[], path: string = '') {
+function getPath(variables: Record<string, any>, pathParameters: OpenAPIV3.ParameterObject[], path: string = '') {
   let resolvedPath = path
   processParameters(variables, pathParameters, (key, value) => {
     resolvedPath = resolvedPath.replace(`{${key}}`, value)
@@ -29,7 +39,7 @@ function getPath(variables: Record<string, string>, pathParameters: OpenAPIV3.Pa
 
 function getHeaders(
   headers: Record<string, string> | Headers | undefined,
-  variables: Record<string, string>,
+  variables: Record<string, any>,
   headerParameters: OpenAPIV3.ParameterObject[],
   authorizations: PlaygroundSecurityScheme | PlaygroundSecurityScheme[],
 ): Record<string, string> {
@@ -108,7 +118,7 @@ export function getAuthorizationsHeaders(authorizations: PlaygroundSecuritySchem
 }
 
 function getQuery(
-  variables: Record<string, string>,
+  variables: Record<string, any>,
   queryParameters: OpenAPIV3.ParameterObject[],
 ) {
   const query: Record<string, string> = {}
@@ -121,7 +131,7 @@ function getQuery(
 }
 
 function getCookies(
-  variables: Record<string, string>,
+  variables: Record<string, any>,
   cookieParameters: OpenAPIV3.ParameterObject[],
 ) {
   const cookies: Record<string, string> = {}
@@ -191,7 +201,7 @@ export function getAuthorizationsCookies(authorizations: PlaygroundSecuritySchem
   return cookies
 }
 
-function setExamplesAsVariables(parameters: OpenAPIV3.ParameterObject[], variables: Record<string, string>) {
+function setExamplesAsVariables(parameters: OpenAPIV3.ParameterObject[], variables: Record<string, any>) {
   parameters.forEach((parameter) => {
     if (!parameter.name) {
       return
@@ -219,7 +229,7 @@ export function buildRequest({
   authorizations = [],
   body = undefined,
   headers = undefined,
-  variables = {},
+  variables = {} as Record<string, any>,
   cookies = {},
   contentType = undefined,
 }: Partial<OARequest>): OARequest {

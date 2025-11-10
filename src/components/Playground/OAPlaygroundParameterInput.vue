@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useI18n } from '@byjohann/vue-i18n'
-import { defineEmits, defineProps, onMounted } from 'vue'
+import { computed, defineEmits, defineProps, onMounted, ref } from 'vue'
 import { getPropertyExample } from '../../lib/examples/getPropertyExample'
+import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
@@ -67,9 +68,58 @@ function onFileChange(e: Event) {
   handleInputChange(file ?? null)
 }
 
+// Object parameter handling
+const isObjectParameter = computed(() => {
+  return props.parameter.schema?.type === 'object'
+})
+
+const objectEntries = ref<Array<{ key: string, value: string }>>([])
+
+function initializeObjectEntries() {
+  if (!isObjectParameter.value) return
+
+  const example = getPropertyExample(props.parameter)
+  if (example && typeof example === 'object' && !Array.isArray(example)) {
+    objectEntries.value = Object.entries(example).map(([key, value]) => ({
+      key,
+      value: String(value)
+    }))
+  }
+
+  if (objectEntries.value.length === 0) {
+    objectEntries.value = [{ key: '', value: '' }]
+  }
+
+  updateObjectValue()
+}
+
+function addObjectEntry() {
+  objectEntries.value.push({ key: '', value: '' })
+}
+
+function removeObjectEntry(index: number) {
+  objectEntries.value.splice(index, 1)
+  if (objectEntries.value.length === 0) {
+    objectEntries.value = [{ key: '', value: '' }]
+  }
+  updateObjectValue()
+}
+
+function updateObjectValue() {
+  const obj: Record<string, string> = {}
+  for (const entry of objectEntries.value) {
+    if (entry.key && entry.value) {
+      obj[entry.key] = entry.value
+    }
+  }
+  handleInputChange(obj)
+}
+
 onMounted(() => {
   if (props.parameter.schema?.enum) {
     emits('update:modelValue', getPropertyExample(props.parameter) ?? props.parameter.schema.enum[0])
+  } else if (isObjectParameter.value) {
+    initializeObjectEntries()
   }
 })
 
@@ -131,6 +181,48 @@ const { t } = useI18n()
           </SelectGroup>
         </SelectContent>
       </Select>
+
+      <div v-else-if="isObjectParameter" class="flex-grow flex flex-col gap-2">
+        <div
+          v-for="(entry, index) in objectEntries"
+          :key="index"
+          class="flex items-center gap-2"
+        >
+          <Input
+            v-model="entry.key"
+            :placeholder="t('Key')"
+            class="bg-muted flex-1"
+            @update:model-value="updateObjectValue"
+            @keydown.enter="emits('submit')"
+          />
+          <Input
+            v-model="entry.value"
+            :placeholder="t('Value')"
+            class="bg-muted flex-1"
+            @update:model-value="updateObjectValue"
+            @keydown.enter="emits('submit')"
+          />
+          <Button
+            v-if="objectEntries.length > 1"
+            type="button"
+            variant="ghost"
+            size="icon"
+            class="h-8 w-8"
+            @click="removeObjectEntry(index)"
+          >
+            <span class="text-lg">−</span>
+          </Button>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          class="w-full"
+          @click="addObjectEntry"
+        >
+          {{ t('Add Field') }}
+        </Button>
+      </div>
 
       <div v-else class="flex-grow flex items-center gap-1">
         <template v-if="isBinary(parameter)">

@@ -10,7 +10,7 @@ export interface IOARequest {
   parameters?: OpenAPIV3.ParameterObject[]
   authorizations?: PlaygroundSecurityScheme | PlaygroundSecurityScheme[]
   body?: any
-  variables?: Record<string, string>
+  variables?: Record<string, any>
   headers: Record<string, string>
   query: Record<string, string>
   contentType?: string
