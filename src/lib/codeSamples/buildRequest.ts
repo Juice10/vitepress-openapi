@@ -1,5 +1,5 @@
 import type { OpenAPIV3 } from '@scalar/openapi-types'
-import type { PlaygroundSecurityScheme } from '../../types'
+import type { ParameterValues, PlaygroundSecurityScheme } from '../../types'
 import { unref } from 'vue'
 import { DEFAULT_BASE_URL } from '../../composables/useTheme'
 import { getPropertyExample } from '../examples/getPropertyExample'
@@ -7,7 +7,7 @@ import { serializeParameter } from '../parameterSerializer'
 import { resolveBaseUrl } from '../resolveBaseUrl'
 import { OARequest } from './request'
 
-function processParameters(variables: Record<string, any>, parameters: OpenAPIV3.ParameterObject[], callback: (key: string, value: string) => void) {
+function processParameters(variables: ParameterValues, parameters: OpenAPIV3.ParameterObject[], callback: (key: string, value: string) => void) {
   const parametersByName = new Map(parameters.map(p => [p.name, p]))
 
   for (const [key, value] of Object.entries(variables)) {
@@ -29,7 +29,7 @@ function processParameters(variables: Record<string, any>, parameters: OpenAPIV3
   }
 }
 
-function getPath(variables: Record<string, any>, pathParameters: OpenAPIV3.ParameterObject[], path: string = '') {
+function getPath(variables: ParameterValues, pathParameters: OpenAPIV3.ParameterObject[], path: string = '') {
   let resolvedPath = path
   processParameters(variables, pathParameters, (key, value) => {
     resolvedPath = resolvedPath.replace(`{${key}}`, value)
@@ -39,7 +39,7 @@ function getPath(variables: Record<string, any>, pathParameters: OpenAPIV3.Param
 
 function getHeaders(
   headers: Record<string, string> | Headers | undefined,
-  variables: Record<string, any>,
+  variables: ParameterValues,
   headerParameters: OpenAPIV3.ParameterObject[],
   authorizations: PlaygroundSecurityScheme | PlaygroundSecurityScheme[],
 ): Record<string, string> {
@@ -118,7 +118,7 @@ export function getAuthorizationsHeaders(authorizations: PlaygroundSecuritySchem
 }
 
 function getQuery(
-  variables: Record<string, any>,
+  variables: ParameterValues,
   queryParameters: OpenAPIV3.ParameterObject[],
 ) {
   const query: Record<string, string> = {}
@@ -131,7 +131,7 @@ function getQuery(
 }
 
 function getCookies(
-  variables: Record<string, any>,
+  variables: ParameterValues,
   cookieParameters: OpenAPIV3.ParameterObject[],
 ) {
   const cookies: Record<string, string> = {}
@@ -201,7 +201,7 @@ export function getAuthorizationsCookies(authorizations: PlaygroundSecuritySchem
   return cookies
 }
 
-function setExamplesAsVariables(parameters: OpenAPIV3.ParameterObject[], variables: Record<string, any>) {
+function setExamplesAsVariables(parameters: OpenAPIV3.ParameterObject[], variables: ParameterValues): ParameterValues {
   parameters.forEach((parameter) => {
     if (!parameter.name) {
       return
@@ -229,7 +229,7 @@ export function buildRequest({
   authorizations = [],
   body = undefined,
   headers = undefined,
-  variables = {} as Record<string, any>,
+  variables = {},
   cookies = {},
   contentType = undefined,
 }: Partial<OARequest>): OARequest {

@@ -1,4 +1,5 @@
 import type { OpenAPIV3 } from '@scalar/openapi-types'
+import type { ParameterValue } from '../types'
 
 /**
  * Serializes a parameter value according to OpenAPI parameter style and explode settings
@@ -6,7 +7,7 @@ import type { OpenAPIV3 } from '@scalar/openapi-types'
  */
 export function serializeParameter(
   parameter: OpenAPIV3.ParameterObject,
-  value: any,
+  value: ParameterValue,
 ): Record<string, string> | null {
   if (value === undefined || value === null || value === '') {
     return null
@@ -66,7 +67,7 @@ function getDefaultExplode(style: string): boolean {
  */
 function serializeObject(
   name: string,
-  value: Record<string, any>,
+  value: Record<string, ParameterValue>,
   style: string,
   explode: boolean,
 ): Record<string, string> {
@@ -143,7 +144,7 @@ function serializeObject(
  */
 function serializeArray(
   name: string,
-  value: any[],
+  value: ParameterValue[],
   style: string,
   explode: boolean,
 ): Record<string, string> {

@@ -97,3 +97,20 @@ export interface PathsGroupView {
   description?: string
   isGrouped: boolean
 }
+
+/**
+ * Represents a value that can be used for OpenAPI parameters.
+ * This type is recursive to support nested objects and arrays.
+ */
+export type ParameterValue =
+  | string
+  | number
+  | boolean
+  | null
+  | ParameterValue[]
+  | { [key: string]: ParameterValue }
+
+/**
+ * A record of parameter names to their values
+ */
+export type ParameterValues = Record<string, ParameterValue>
