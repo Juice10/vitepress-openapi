@@ -7,7 +7,7 @@ import { serializeParameter } from '../parameterSerializer'
 import { resolveBaseUrl } from '../resolveBaseUrl'
 import { OARequest } from './request'
 
-function processParameters(variables: ParameterValues, parameters: OpenAPIV3.ParameterObject[], callback: (key: string, value: string) => void) {
+function processParameters(variables: ParameterValues, parameters: OpenAPIV3.ParameterObject[], callback: (key: string, value: string | number | boolean) => void) {
   const parametersByName = new Map(parameters.map(p => [p.name, p]))
 
   for (const [key, value] of Object.entries(variables)) {
@@ -32,7 +32,7 @@ function processParameters(variables: ParameterValues, parameters: OpenAPIV3.Par
 function getPath(variables: ParameterValues, pathParameters: OpenAPIV3.ParameterObject[], path: string = '') {
   let resolvedPath = path
   processParameters(variables, pathParameters, (key, value) => {
-    resolvedPath = resolvedPath.replace(`{${key}}`, value)
+    resolvedPath = resolvedPath.replace(`{${key}}`, String(value))
   })
   return resolvedPath
 }
@@ -57,8 +57,8 @@ function getHeaders(
     }
   }
 
-  processParameters(variables, headerParameters, (key: string, value: string) => {
-    resolvedHeaders.set(key.toLowerCase(), value)
+  processParameters(variables, headerParameters, (key: string, value: string | number | boolean) => {
+    resolvedHeaders.set(key.toLowerCase(), String(value))
   })
 
   getAuthorizationsHeaders(authorizations).forEach((value, key) => {
@@ -121,9 +121,9 @@ function getQuery(
   variables: ParameterValues,
   queryParameters: OpenAPIV3.ParameterObject[],
 ) {
-  const query: Record<string, string> = {}
+  const query: Record<string, string | number | boolean> = {}
 
-  processParameters(variables, queryParameters, (key: string, value: string) => {
+  processParameters(variables, queryParameters, (key: string, value: string | number | boolean) => {
     query[key] = value
   })
 
@@ -136,8 +136,8 @@ function getCookies(
 ) {
   const cookies: Record<string, string> = {}
 
-  processParameters(variables, cookieParameters, (key: string, value: string) => {
-    cookies[key] = value
+  processParameters(variables, cookieParameters, (key: string, value: string | number | boolean) => {
+    cookies[key] = String(value)
   })
 
   return cookies

@@ -16,7 +16,7 @@ export function buildHarRequest(
     queryString: [
       ...Object.entries(oaRequest.query).map(([name, value]) => ({
         name,
-        value,
+        value: value as any, // Preserve numeric types for code generation, will be converted to string by HTTP layer
       })),
     ],
     cookies: Object.entries(oaRequest.cookies).map(([name, value]) => ({
