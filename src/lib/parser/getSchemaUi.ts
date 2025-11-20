@@ -47,8 +47,8 @@ export interface OAProperty {
 class UiPropertyFactory {
   static createBaseProperty(
     name: string,
-      property: Partial<OpenAPI.SchemaObject> = {},
-      required = false,
+    property: Partial<OpenAPI.SchemaObject> = {},
+    required = false,
   ): OAProperty {
     const nodeTypes = Array.isArray(property.type)
       ? property.type

@@ -14,15 +14,22 @@ export function buildHarRequest(
       value,
     })),
     queryString: [
-      ...Object.entries(oaRequest.query).map(([name, value]) => ({
-        name,
-        value,
-      })),
+      ...Object.entries(oaRequest.query).flatMap(([name, value]) => {
+        if (Array.isArray(value)) {
+          // For arrays, create multiple query parameters with the same name
+          return value.map(v => ({ name, value: v as any }))
+        } else {
+          return [{ name, value: value as any }]
+        }
+      }),
     ],
-    cookies: Object.entries(oaRequest.cookies).map(([name, value]) => ({
-      name,
-      value,
-    })),
+    cookies: Object.entries(oaRequest.cookies).flatMap(([name, value]) => {
+      if (Array.isArray(value)) {
+        return value.map(v => ({ name, value: v as any }))
+      } else {
+        return [{ name, value: value as any }]
+      }
+    }),
     headersSize: -1,
     bodySize: -1,
   }

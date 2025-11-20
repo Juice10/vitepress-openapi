@@ -4,23 +4,23 @@ import type { RemovableRef } from '@vueuse/core'
 /**
  * Slots required for OAOperation component.
  */
-export type OperationSlot =
-  | 'header'
-  | 'tags'
-  | 'path'
-  | 'description'
-  | 'security'
-  | 'parameters'
-  | 'request-body'
-  | 'responses'
-  | 'playground'
-  | 'try-it' // @deprecated. TODO: Remove this slot.
-  | 'code-samples'
-  | 'branding'
-  | 'footer'
-  // TODO: Implement these slots.
-  // | 'summary'
-  // | 'servers'
+export type OperationSlot
+  = | 'header'
+    | 'tags'
+    | 'path'
+    | 'description'
+    | 'security'
+    | 'parameters'
+    | 'request-body'
+    | 'responses'
+    | 'playground'
+    | 'try-it' // @deprecated. TODO: Remove this slot.
+    | 'code-samples'
+    | 'branding'
+    | 'footer'
+// TODO: Implement these slots.
+// | 'summary'
+// | 'servers'
 
 export type OpenAPIDocument = OpenAPIV3.Document & OpenAPIV3_1.Document
 
@@ -97,3 +97,20 @@ export interface PathsGroupView {
   description?: string
   isGrouped: boolean
 }
+
+/**
+ * Represents a value that can be used for OpenAPI parameters.
+ * This type is recursive to support nested objects and arrays.
+ */
+export type ParameterValue
+  = | string
+    | number
+    | boolean
+    | null
+    | ParameterValue[]
+    | { [key: string]: ParameterValue }
+
+/**
+ * A record of parameter names to their values
+ */
+export type ParameterValues = Record<string, ParameterValue>

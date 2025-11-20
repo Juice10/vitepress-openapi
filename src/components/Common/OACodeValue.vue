@@ -4,9 +4,9 @@ const { value } = defineProps({
 })
 
 const getDisplayValue = (value) => {
-  // We run JSON.stringify on everything except objects (which Vue handles better)
-  // to distinguish `"null"` from `null`, `"1"` from `1`, etc.
-  return value && typeof value === 'object' ? value : JSON.stringify(value)
+  // We run JSON.stringify on everything to properly display values
+  // This ensures objects, arrays, and primitives all display correctly
+  return JSON.stringify(value)
 }
 </script>
 

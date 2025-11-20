@@ -1,25 +1,46 @@
 import type { OpenAPIV3 } from '@scalar/openapi-types'
-import type { PlaygroundSecurityScheme } from '../../types'
+import type { ParameterValues, PlaygroundSecurityScheme } from '../../types'
 import { unref } from 'vue'
 import { DEFAULT_BASE_URL } from '../../composables/useTheme'
 import { getPropertyExample } from '../examples/getPropertyExample'
+import { serializeParameter } from '../parameterSerializer'
 import { resolveBaseUrl } from '../resolveBaseUrl'
 import { OARequest } from './request'
 
-function processParameters(variables: Record<string, string>, parameters: OpenAPIV3.ParameterObject[], callback: (key: string, value: string) => void) {
-  const parameterNames = new Set(parameters.map(parameter => parameter.name))
+function processParameters(
+  variables: ParameterValues,
+  parameters: OpenAPIV3.ParameterObject[],
+  callback: (key: string, value: any) => void,
+  shouldSerialize: (parameter: OpenAPIV3.ParameterObject, value: any) => boolean = () => false,
+) {
+  const parametersByName = new Map(parameters.map(p => [p.name, p]))
+
   for (const [key, value] of Object.entries(variables)) {
-    if (!parameterNames.has(key)) {
+    if (!parametersByName.has(key)) {
       continue
     }
     if (value === undefined || value === '') {
       continue
     }
-    callback(key, value)
+
+    const parameter = parametersByName.get(key)!
+
+    // Serialize if needed (e.g., deepObject style for objects)
+    if (shouldSerialize(parameter, value)) {
+      const serialized = serializeParameter(parameter, value)
+      if (serialized) {
+        for (const [serializedKey, serializedValue] of Object.entries(serialized)) {
+          callback(serializedKey, serializedValue)
+        }
+      }
+    } else {
+      // Pass through the original value
+      callback(key, value)
+    }
   }
 }
 
-function getPath(variables: Record<string, string>, pathParameters: OpenAPIV3.ParameterObject[], path: string = '') {
+function getPath(variables: ParameterValues, pathParameters: OpenAPIV3.ParameterObject[], path: string = '') {
   let resolvedPath = path
   processParameters(variables, pathParameters, (key, value) => {
     resolvedPath = resolvedPath.replace(`{${key}}`, value)
@@ -29,7 +50,7 @@ function getPath(variables: Record<string, string>, pathParameters: OpenAPIV3.Pa
 
 function getHeaders(
   headers: Record<string, string> | Headers | undefined,
-  variables: Record<string, string>,
+  variables: ParameterValues,
   headerParameters: OpenAPIV3.ParameterObject[],
   authorizations: PlaygroundSecurityScheme | PlaygroundSecurityScheme[],
 ): Record<string, string> {
@@ -108,27 +129,43 @@ export function getAuthorizationsHeaders(authorizations: PlaygroundSecuritySchem
 }
 
 function getQuery(
-  variables: Record<string, string>,
+  variables: ParameterValues,
   queryParameters: OpenAPIV3.ParameterObject[],
 ) {
-  const query: Record<string, string> = {}
+  const query: Record<string, any> = {}
 
-  processParameters(variables, queryParameters, (key: string, value: string) => {
-    query[key] = value
-  })
+  processParameters(
+    variables,
+    queryParameters,
+    (key: string, value: any) => {
+      query[key] = value
+    },
+    (parameter, value) => {
+      // Serialize objects with deepObject style (default for query objects)
+      return typeof value === 'object' && !Array.isArray(value) && value !== null
+    },
+  )
 
   return query
 }
 
 function getCookies(
-  variables: Record<string, string>,
+  variables: ParameterValues,
   cookieParameters: OpenAPIV3.ParameterObject[],
 ) {
-  const cookies: Record<string, string> = {}
+  const cookies: Record<string, any> = {}
 
-  processParameters(variables, cookieParameters, (key: string, value: string) => {
-    cookies[key] = value
-  })
+  processParameters(
+    variables,
+    cookieParameters,
+    (key: string, value: any) => {
+      cookies[key] = value
+    },
+    (parameter, value) => {
+      // Serialize objects for cookies
+      return typeof value === 'object' && !Array.isArray(value) && value !== null
+    },
+  )
 
   return cookies
 }
@@ -191,7 +228,7 @@ export function getAuthorizationsCookies(authorizations: PlaygroundSecuritySchem
   return cookies
 }
 
-function setExamplesAsVariables(parameters: OpenAPIV3.ParameterObject[], variables: Record<string, string>) {
+function setExamplesAsVariables(parameters: OpenAPIV3.ParameterObject[], variables: ParameterValues): ParameterValues {
   parameters.forEach((parameter) => {
     if (!parameter.name) {
       return

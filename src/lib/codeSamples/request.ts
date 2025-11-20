@@ -1,5 +1,5 @@
 import type { OpenAPIV3 } from '@scalar/openapi-types'
-import type { PlaygroundSecurityScheme } from '../../types'
+import type { ParameterValues, PlaygroundSecurityScheme } from '../../types'
 import { DEFAULT_BASE_URL } from '../../composables/useTheme'
 
 export interface IOARequest {
@@ -10,11 +10,11 @@ export interface IOARequest {
   parameters?: OpenAPIV3.ParameterObject[]
   authorizations?: PlaygroundSecurityScheme | PlaygroundSecurityScheme[]
   body?: any
-  variables?: Record<string, string>
+  variables?: ParameterValues
   headers: Record<string, string>
-  query: Record<string, string>
+  query: Record<string, any>
   contentType?: string
-  cookies?: Record<string, string>
+  cookies?: Record<string, any>
 }
 
 export class OARequest {
@@ -25,11 +25,11 @@ export class OARequest {
   public readonly parameters: OpenAPIV3.ParameterObject[] | undefined
   public readonly authorizations: PlaygroundSecurityScheme | PlaygroundSecurityScheme[] | undefined
   public readonly body: any | undefined
-  public readonly variables: Record<string, any>
+  public readonly variables: ParameterValues
   public readonly headers: Record<string, string>
-  public readonly query: Record<string, string>
+  public readonly query: Record<string, any>
   public readonly contentType: string | undefined
-  public readonly cookies: Record<string, string>
+  public readonly cookies: Record<string, any>
 
   constructor({
     baseUrl,
