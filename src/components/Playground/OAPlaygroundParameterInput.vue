@@ -112,7 +112,11 @@ function updateObjectValue() {
       obj[entry.key] = entry.value
     }
   }
-  handleInputChange(obj)
+  if (Object.keys(obj).length > 0) {
+    handleInputChange(obj)
+  } else {
+    handleInputChange(null)
+  }
 }
 
 onMounted(() => {
