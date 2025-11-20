@@ -7,7 +7,12 @@ import { serializeParameter } from '../parameterSerializer'
 import { resolveBaseUrl } from '../resolveBaseUrl'
 import { OARequest } from './request'
 
-function processParameters(variables: ParameterValues, parameters: OpenAPIV3.ParameterObject[], callback: (key: string, value: string) => void) {
+function processParameters(
+  variables: ParameterValues,
+  parameters: OpenAPIV3.ParameterObject[],
+  callback: (key: string, value: any) => void,
+  shouldSerialize: (parameter: OpenAPIV3.ParameterObject, value: any) => boolean = () => false,
+) {
   const parametersByName = new Map(parameters.map(p => [p.name, p]))
 
   for (const [key, value] of Object.entries(variables)) {
@@ -19,12 +24,18 @@ function processParameters(variables: ParameterValues, parameters: OpenAPIV3.Par
     }
 
     const parameter = parametersByName.get(key)!
-    const serialized = serializeParameter(parameter, value)
 
-    if (serialized) {
-      for (const [serializedKey, serializedValue] of Object.entries(serialized)) {
-        callback(serializedKey, serializedValue)
+    // Serialize if needed (e.g., deepObject style for objects)
+    if (shouldSerialize(parameter, value)) {
+      const serialized = serializeParameter(parameter, value)
+      if (serialized) {
+        for (const [serializedKey, serializedValue] of Object.entries(serialized)) {
+          callback(serializedKey, serializedValue)
+        }
       }
+    } else {
+      // Pass through the original value
+      callback(key, value)
     }
   }
 }
@@ -121,11 +132,19 @@ function getQuery(
   variables: ParameterValues,
   queryParameters: OpenAPIV3.ParameterObject[],
 ) {
-  const query: Record<string, string> = {}
+  const query: Record<string, any> = {}
 
-  processParameters(variables, queryParameters, (key: string, value: string) => {
-    query[key] = value
-  })
+  processParameters(
+    variables,
+    queryParameters,
+    (key: string, value: any) => {
+      query[key] = value
+    },
+    (parameter, value) => {
+      // Serialize objects with deepObject style (default for query objects)
+      return typeof value === 'object' && !Array.isArray(value) && value !== null
+    },
+  )
 
   return query
 }
@@ -134,11 +153,19 @@ function getCookies(
   variables: ParameterValues,
   cookieParameters: OpenAPIV3.ParameterObject[],
 ) {
-  const cookies: Record<string, string> = {}
+  const cookies: Record<string, any> = {}
 
-  processParameters(variables, cookieParameters, (key: string, value: string) => {
-    cookies[key] = value
-  })
+  processParameters(
+    variables,
+    cookieParameters,
+    (key: string, value: any) => {
+      cookies[key] = value
+    },
+    (parameter, value) => {
+      // Serialize objects for cookies
+      return typeof value === 'object' && !Array.isArray(value) && value !== null
+    },
+  )
 
   return cookies
 }
