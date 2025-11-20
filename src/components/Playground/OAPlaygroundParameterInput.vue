@@ -212,6 +212,11 @@ const { t } = useI18n()
           >
             <span class="text-lg">−</span>
           </Button>
+          <div
+            v-else
+            class="h-8 w-8"
+            aria-hidden="true"
+          ></div>
         </div>
         <Button
           type="button"
