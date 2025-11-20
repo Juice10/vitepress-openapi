@@ -8,7 +8,7 @@ import type { ParameterValue } from '../types'
 export function serializeParameter(
   parameter: OpenAPIV3.ParameterObject,
   value: ParameterValue,
-): Record<string, string> | null {
+): Record<string, string | number | boolean> | null {
   if (value === undefined || value === null || value === '') {
     return null
   }
@@ -21,9 +21,9 @@ export function serializeParameter(
   const style = parameter.style || getDefaultStyle(parameter.in)
   const explode = parameter.explode !== undefined ? parameter.explode : getDefaultExplode(style)
 
-  // Handle simple scalar values
+  // Handle simple scalar values - preserve types for numbers and booleans
   if (typeof value !== 'object') {
-    return { [name]: String(value) }
+    return { [name]: value }
   }
 
   // Handle object values

@@ -206,7 +206,8 @@ describe('buildRequest', () => {
         tag: ['urgent', 'important'],
       },
     })
-    expect(request.query.tag).toEqual(['urgent', 'important'])
+    // Array parameters are serialized as comma-separated strings by default (form style, explode=true)
+    expect(request.query.tag).toBe('urgent,important')
   })
 
   it('does not include body for GET requests', () => {

@@ -76,13 +76,15 @@ const isObjectParameter = computed(() => {
 const objectEntries = ref<Array<{ key: string, value: string }>>([])
 
 function initializeObjectEntries() {
-  if (!isObjectParameter.value) return
+  if (!isObjectParameter.value) {
+    return
+  }
 
   const example = getPropertyExample(props.parameter)
   if (example && typeof example === 'object' && !Array.isArray(example)) {
     objectEntries.value = Object.entries(example).map(([key, value]) => ({
       key,
-      value: String(value)
+      value: String(value),
     }))
   }
 
