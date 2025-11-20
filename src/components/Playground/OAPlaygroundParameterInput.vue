@@ -90,7 +90,10 @@ function initializeObjectEntries() {
     objectEntries.value = [{ key: '', value: '' }]
   }
 
-  updateObjectValue()
+  // Only update if there is at least one non-empty key or value
+  if (objectEntries.value.some(entry => entry.key !== '' || entry.value !== '')) {
+    updateObjectValue()
+  }
 }
 
 function addObjectEntry() {
