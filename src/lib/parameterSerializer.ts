@@ -78,7 +78,16 @@ function serializeObject(
       // deepObject: color[R]=100&color[G]=200&color[B]=150
       for (const [key, val] of Object.entries(value)) {
         if (val !== undefined && val !== null && val !== '') {
-          result[`${name}[${key}]`] = String(val)
+          if (typeof val === 'object' && val !== null) {
+            if (Array.isArray(val)) {
+              result[`${name}[${key}]`] = val.map(String).join(',')
+            } else {
+              // For nested objects in deepObject, you might need recursive flattening
+              result[`${name}[${key}]`] = JSON.stringify(val)
+            }
+          } else {
+            result[`${name}[${key}]`] = String(val)
+          }
         }
       }
       break
